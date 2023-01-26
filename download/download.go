@@ -23,14 +23,22 @@ type Client struct {
 	client pb.FileServiceClient
 }
 
+type FileListClient struct {
+	lsclient pb.ListServiceClient
+}
+
 func NewClient(conn grpc.ClientConnInterface) Client {
 	return Client{
 		client: pb.NewFileServiceClient(conn),
 	}
 }
 
+func NewListServiceClient(conn grpc.ClientConnInterface) FileListClient {
+	return FileListClient{lsclient: pb.NewListServiceClient(conn)}
+}
+
 func (c Client) Download(name string) (pb.FileService_DownloadClient, error) {
-	l := pb.NewFileServiceClient(config.Conn)
+	l := pb.NewFileServiceClient(config.ConnFile)
 	fileStreamResponse, err := l.Download(context.TODO(), &pb.DownloadRequest{Filename: name})
 	if err != nil {
 		return nil, err
@@ -51,8 +59,8 @@ func (c Client) Download(name string) (pb.FileService_DownloadClient, error) {
 	return nil, nil
 }
 
-func (c Client) GetFileList() FileList {
-	res, err := c.client.GetFiles(context.Background(), &pb.GetFilesRequest{})
+func (lsclient FileListClient) GetFileList() FileList {
+	res, err := lsclient.lsclient.GetFiles(context.Background(), &pb.GetFilesRequest{})
 	if err != nil {
 		log.Fatal(err)
 	}

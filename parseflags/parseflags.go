@@ -30,8 +30,9 @@ func parseArgs() Arguments {
 }
 
 func Perform(args Arguments) error {
-	up := upload.NewClient(config.Conn)
-	down := download.NewClient(config.Conn)
+	up := upload.NewClient(config.ConnFile)
+	down := download.NewClient(config.ConnFile)
+	list := download.NewListServiceClient(config.ConnList)
 
 	operation := args["o"]
 	if operation == "" {
@@ -56,7 +57,7 @@ func Perform(args Arguments) error {
 		return nil
 
 	case "list":
-		down.GetFileList()
+		list.GetFileList()
 		return nil
 
 	case "download":
