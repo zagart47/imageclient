@@ -7,6 +7,7 @@ import (
 	"google.golang.org/grpc"
 	pb "imageclient/pkg/proto"
 	"io"
+	"log"
 	"os"
 	"strings"
 )
@@ -63,6 +64,7 @@ func (c Client) Upload(ctx context.Context, file string) (string, error) {
 	if err != nil {
 		return "", fmt.Errorf("cannot send file to server (%s)", err.Error())
 	}
+	log.Println("file uploaded:", file)
 	return fmt.Sprintf("file uploaded %s", file), nil
 }
 

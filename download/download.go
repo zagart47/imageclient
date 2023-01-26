@@ -7,8 +7,8 @@ import (
 	"imageclient/config"
 	pb "imageclient/pkg/proto"
 	"io"
-	"io/ioutil"
 	"log"
+	"os"
 )
 
 type File struct {
@@ -47,14 +47,17 @@ func (c Client) Download(name string) (pb.FileService_DownloadClient, error) {
 	for {
 		req, err := fileStreamResponse.Recv()
 		if err == io.EOF {
-			log.Println("received all fragments")
+			log.Println("file downloaded:", name)
 			break
 		}
 		if err != nil {
 			log.Println("error receiving fragments")
 			break
 		}
-		ioutil.WriteFile("files/"+name, req.GetFragment(), 0644)
+		err1 := os.WriteFile("files/"+name, req.GetFragment(), 0644)
+		if err1 != nil {
+			return nil, err1
+		}
 	}
 	return nil, nil
 }
@@ -64,6 +67,7 @@ func (lsclient FileListClient) GetFileList() FileList {
 	if err != nil {
 		log.Fatal(err)
 	}
+
 	fl := FileList{}
 
 	for _, v := range res.Info {
