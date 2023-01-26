@@ -7,7 +7,7 @@ Test task from Tages company.
 Use the git cli to clone repository.
 
 ```bash
-git clone https://github.com/zagart47/imagemanager.git
+git clone https://github.com/zagart47/imageclient.git
 ```
 
 ## Usage
