@@ -1,15 +1,16 @@
 package upload
 
 import (
-	"bufio"
 	"context"
 	"fmt"
 	"google.golang.org/grpc"
+	"google.golang.org/grpc/metadata"
 	pb "imageclient/pkg/proto"
 	"io"
 	"log"
 	"os"
 	"strings"
+	"time"
 )
 
 type Client struct {
@@ -23,44 +24,45 @@ func NewClient(conn grpc.ClientConnInterface) Client {
 }
 
 func (c Client) Upload(ctx context.Context, file string) (string, error) {
+	ctx, cancel := context.WithDeadline(ctx, time.Now().Add(1000*time.Second))
+	defer cancel()
+
 	f, err := os.Open(file)
 	if err != nil {
 		return "", fmt.Errorf("cannot open file (%s)", err.Error())
 	}
+	fileStat, err := os.Stat(file)
+	if err != nil {
+		return "", err
+	}
 
-	stream, err := c.client.Upload(ctx)
 	if err != nil {
 		return "", fmt.Errorf("cannot upload context (%s)", err.Error())
 	}
 	TrimFileNamePrefix(&file)
-	req := &pb.UploadRequest{
-		Filename: file,
-	}
-	err = stream.Send(req)
-	if err != nil {
-		return "", fmt.Errorf("cannot send filename to stream (%s)", err.Error())
-	}
-	reader := bufio.NewReader(f)
-	buffer := make([]byte, 1024)
+
+	fileName := fileStat.Name()
+
+	md := metadata.Pairs("filename", fileName)
+	mdCtx := metadata.NewOutgoingContext(context.Background(), md)
+
+	buffer := make([]byte, 64*1024)
+	uploadStream, err := c.client.Upload(mdCtx)
 
 	for {
-		n, err := reader.Read(buffer)
+		n, err := f.Read(buffer)
 		if err == io.EOF {
 			break
 		}
 		if err != nil {
 			return "", fmt.Errorf("buffer reading error (%s)", err.Error())
 		}
-		req := &pb.UploadRequest{
-			Fragment: buffer[:n],
+		req := &pb.UploadRequest{Fragment: buffer[:n]}
+		if err := uploadStream.Send(req); err != nil {
+			log.Fatal(err.Error())
 		}
-		err = stream.Send(req)
-		if err != nil {
-			return "", fmt.Errorf("cannot send filebody to stream (%s)", err.Error())
-		}
-
 	}
-	_, err = stream.CloseAndRecv()
+	_, err = uploadStream.CloseAndRecv()
 	if err != nil {
 		return "", fmt.Errorf("cannot send file to server (%s)", err.Error())
 	}
