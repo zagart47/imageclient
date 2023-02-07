@@ -1,4 +1,4 @@
-# Test Task for "Tages".
+# Test Task solution for "Tages".
 
 Test task from Tages company.
 
