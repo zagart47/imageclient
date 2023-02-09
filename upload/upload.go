@@ -36,10 +36,6 @@ func (c Client) Upload(ctx context.Context, file string) (string, error) {
 		return "", err
 	}
 
-	if err != nil {
-		return "", fmt.Errorf("cannot upload context (%s)", err.Error())
-	}
-
 	fileName := fileStat.Name()
 
 	md := metadata.Pairs("filename", fileName)
@@ -62,10 +58,10 @@ func (c Client) Upload(ctx context.Context, file string) (string, error) {
 			log.Fatal(err.Error())
 		}
 	}
-	_, err = uploadStream.CloseAndRecv()
-	if err != nil {
+	if _, err = uploadStream.CloseAndRecv(); err != nil {
 		return "", fmt.Errorf("cannot send file to server (%s)", err.Error())
 	}
+
 	log.Println("file uploaded:", file)
 	return fmt.Sprintf("file uploaded %s", file), nil
 }
