@@ -4,11 +4,14 @@ import (
 	"context"
 	"fmt"
 	"google.golang.org/grpc"
+	"google.golang.org/grpc/metadata"
 	"imageclient/config"
+	"imageclient/model"
 	pb "imageclient/pkg/proto"
 	"io"
 	"log"
 	"os"
+	"time"
 )
 
 type File struct {
@@ -38,28 +41,31 @@ func NewListServiceClient(conn grpc.ClientConnInterface) FileListClient {
 }
 
 func (c Client) Download(name string) (pb.FileService_DownloadClient, error) {
-	l := pb.NewFileServiceClient(config.ConnFile)
-	fileStreamResponse, err := l.Download(context.TODO(), &pb.DownloadRequest{Filename: name})
+	ctx := context.Background()
+	ctx, cancel := context.WithDeadline(ctx, time.Now().Add(1000*time.Second))
+	defer cancel()
+
+	md := metadata.Pairs("filename", name)
+	mdCtx := metadata.NewOutgoingContext(context.Background(), md)
+
+	fd := pb.NewFileServiceClient(config.ConnFile)
+	downloadStream, err := fd.Download(mdCtx, &pb.DownloadRequest{})
 	if err != nil {
 		return nil, err
 	}
-
+	f := model.NewFile(name)
 	for {
-		req, err := fileStreamResponse.Recv()
+		req, err := downloadStream.Recv()
 		if err == io.EOF {
-			log.Println("file downloaded:", name)
+			err1 := os.WriteFile(f.Path, f.Buffer.Bytes(), 0644)
+			if err1 != nil {
+				log.Println(err.Error())
+			}
 			break
 		}
-		if err != nil {
-			log.Println("error receiving fragments")
-			break
-		}
-		err1 := os.WriteFile("files/"+name, req.GetFragment(), 0644)
-		if err1 != nil {
-			return nil, err1
-		}
+		f.Buffer.Write(req.GetFragment())
 	}
-	return nil, nil
+	return nil, err
 }
 
 func (lsclient FileListClient) GetFileList() FileList {

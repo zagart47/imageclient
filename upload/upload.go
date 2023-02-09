@@ -5,11 +5,11 @@ import (
 	"fmt"
 	"google.golang.org/grpc"
 	"google.golang.org/grpc/metadata"
+	"imageclient/config"
 	pb "imageclient/pkg/proto"
 	"io"
 	"log"
 	"os"
-	"strings"
 	"time"
 )
 
@@ -39,15 +39,15 @@ func (c Client) Upload(ctx context.Context, file string) (string, error) {
 	if err != nil {
 		return "", fmt.Errorf("cannot upload context (%s)", err.Error())
 	}
-	TrimFileNamePrefix(&file)
 
 	fileName := fileStat.Name()
 
 	md := metadata.Pairs("filename", fileName)
 	mdCtx := metadata.NewOutgoingContext(context.Background(), md)
 
-	buffer := make([]byte, 64*1024)
-	uploadStream, err := c.client.Upload(mdCtx)
+	buffer := make([]byte, 1024)
+	fu := pb.NewFileServiceClient(config.ConnFile)
+	uploadStream, err := fu.Upload(mdCtx)
 
 	for {
 		n, err := f.Read(buffer)
@@ -68,14 +68,4 @@ func (c Client) Upload(ctx context.Context, file string) (string, error) {
 	}
 	log.Println("file uploaded:", file)
 	return fmt.Sprintf("file uploaded %s", file), nil
-}
-
-func TrimFileNamePrefix(filename *string) {
-	for {
-		if strings.Contains(*filename, "/") || strings.Contains(*filename, "\\") {
-			*filename = (*filename)[1:]
-		} else {
-			break
-		}
-	}
 }

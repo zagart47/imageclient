@@ -7,12 +7,13 @@ import (
 	"imageclient/config"
 	"imageclient/download"
 	"imageclient/upload"
+	"log"
 )
 
 func ParseFlags() {
 	err := Perform(parseArgs())
 	if err != nil {
-		panic(err)
+		log.Fatal(err)
 	}
 }
 
