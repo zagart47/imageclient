@@ -1,7 +1,6 @@
 package parseflags
 
 import (
-	"context"
 	"errors"
 	"flag"
 	"imageclient/config"
@@ -51,8 +50,7 @@ func Perform(args Arguments) error {
 		if item == "" {
 			return errors.New("-file flag has to be specified")
 		}
-		_, err := up.Upload(context.Background(), fileName)
-		if err != nil {
+		if _, err := up.Upload(fileName); err != nil {
 			return err
 		}
 		return nil
@@ -73,6 +71,6 @@ func Perform(args Arguments) error {
 		return nil
 
 	default:
-		return errors.New("Operation abcd not allowed!")
+		return errors.New("operation not allowed")
 	}
 }

@@ -42,7 +42,7 @@ func NewListServiceClient(conn grpc.ClientConnInterface) FileListClient {
 
 func (c Client) Download(name string) (pb.FileService_DownloadClient, error) {
 	ctx := context.Background()
-	ctx, cancel := context.WithDeadline(ctx, time.Now().Add(1000*time.Second))
+	ctx, cancel := context.WithDeadline(ctx, time.Now().Add(10*time.Second))
 	defer cancel()
 
 	md := metadata.Pairs("filename", name)
@@ -68,46 +68,9 @@ func (c Client) Download(name string) (pb.FileService_DownloadClient, error) {
 	return nil, err
 }
 
-func (lsclient FileListClient) GetFileList() FileList {
-	res, err := lsclient.lsclient.GetFiles(context.Background(), &pb.GetFilesRequest{})
+func (lsclient FileListClient) GetFileList() {
+	table, err := lsclient.lsclient.GetFiles(context.Background(), &pb.GetFilesRequest{})
 	if err != nil {
-		log.Fatal(err)
 	}
-
-	fl := FileList{}
-
-	for _, v := range res.Info {
-		fl = append(fl, File{
-			FileName: v.FileName,
-			Created:  v.Created,
-			Updated:  v.Updated,
-		})
-	}
-	Decorate()
-	fmt.Println("|     Имя файла      |    Дата создания    |   Дата обновления   |")
-	Decorate()
-	for _, v := range fl {
-
-		fmt.Printf("|%s| %s | %s |\n", Fitting(v.FileName, 20), v.Created, Fitting(v.Updated, 19))
-	}
-	Decorate()
-	return fl
-}
-
-func Decorate() {
-	fmt.Println("+--------------------+---------------------+---------------------+")
-}
-
-func Fitting(s string, n int) string {
-	for len(s) < n {
-		s = s + " "
-		if len(s) == n {
-			break
-		}
-		s = " " + s
-		if len(s) == n {
-			break
-		}
-	}
-	return s
+	fmt.Println(table.GetInfo())
 }

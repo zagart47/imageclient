@@ -23,8 +23,9 @@ func NewClient(conn grpc.ClientConnInterface) Client {
 	}
 }
 
-func (c Client) Upload(ctx context.Context, file string) (string, error) {
-	ctx, cancel := context.WithDeadline(ctx, time.Now().Add(1000*time.Second))
+func (c Client) Upload(file string) (string, error) {
+	ctx := context.Background()
+	ctx, cancel := context.WithDeadline(ctx, time.Now().Add(10*time.Second))
 	defer cancel()
 
 	f, err := os.Open(file)
