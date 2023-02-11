@@ -41,12 +41,11 @@ func NewListServiceClient(conn grpc.ClientConnInterface) FileListClient {
 }
 
 func (c Client) Download(name string) (pb.FileService_DownloadClient, error) {
-	ctx := context.Background()
-	ctx, cancel := context.WithDeadline(ctx, time.Now().Add(10*time.Second))
+	ctx, cancel := context.WithDeadline(context.Background(), time.Now().Add(10*time.Second))
 	defer cancel()
 
 	md := metadata.Pairs("filename", name)
-	mdCtx := metadata.NewOutgoingContext(context.Background(), md)
+	mdCtx := metadata.NewOutgoingContext(ctx, md)
 
 	fd := pb.NewFileServiceClient(config.ConnFile)
 	downloadStream, err := fd.Download(mdCtx, &pb.DownloadRequest{})
@@ -57,10 +56,13 @@ func (c Client) Download(name string) (pb.FileService_DownloadClient, error) {
 	for {
 		req, err := downloadStream.Recv()
 		if err == io.EOF {
-			err1 := os.WriteFile(f.Path, f.Buffer.Bytes(), 0644)
-			if err1 != nil {
+			if err := os.WriteFile(f.Path, f.Buffer.Bytes(), 0644); err != nil {
 				log.Println(err.Error())
 			}
+			break
+		}
+		if err != nil {
+			log.Println(err.Error())
 			break
 		}
 		f.Buffer.Write(req.GetFragment())
@@ -71,6 +73,7 @@ func (c Client) Download(name string) (pb.FileService_DownloadClient, error) {
 func (lsclient FileListClient) GetFileList() {
 	table, err := lsclient.lsclient.GetFiles(context.Background(), &pb.GetFilesRequest{})
 	if err != nil {
+		log.Println(err.Error())
 	}
 	fmt.Println(table.GetInfo())
 }

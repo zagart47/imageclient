@@ -64,8 +64,7 @@ func Perform(args Arguments) error {
 		if id == "" {
 			return errors.New("-id flag has to be specified")
 		}
-		_, err := down.Download(fileName)
-		if err != nil {
+		if _, err := down.Download(fileName); err != nil {
 			return err
 		}
 		return nil
