@@ -1,6 +1,6 @@
-# Test Task solution for "Tages".
+# Test Task.
 
-Test task from Tages company.
+Test task.
 
 ## Installation
 
