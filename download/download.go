@@ -67,7 +67,8 @@ func (c Client) Download(name string) (pb.FileService_DownloadClient, error) {
 		}
 		f.Buffer.Write(req.GetFragment())
 	}
-	return nil, err
+	log.Printf("file downloaded: %s", f.Name)
+	return nil, nil
 }
 
 func (lsclient FileListClient) GetFileList() {

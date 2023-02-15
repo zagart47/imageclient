@@ -63,6 +63,6 @@ func (c Client) Upload(file string) (string, error) {
 		return "", fmt.Errorf("cannot send file to server (%s)", err.Error())
 	}
 
-	log.Println("file uploaded:", file)
-	return fmt.Sprintf("file uploaded %s", file), nil
+	fmt.Println("file uploaded:", fileName)
+	return fmt.Sprintf("file uploaded %s", fileName), nil
 }
