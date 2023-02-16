@@ -6,7 +6,7 @@ import (
 	"google.golang.org/grpc"
 	"google.golang.org/grpc/metadata"
 	"imageclient/config"
-	"imageclient/model"
+	"imageclient/file"
 	pb "imageclient/pkg/proto"
 	"io"
 	"log"
@@ -52,7 +52,7 @@ func (c Client) Download(name string) (pb.FileService_DownloadClient, error) {
 	if err != nil {
 		return nil, err
 	}
-	f := model.NewFile(name)
+	f := file.NewFile(name)
 	for {
 		req, err := downloadStream.Recv()
 		if err == io.EOF {
