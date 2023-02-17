@@ -10,42 +10,60 @@ import (
 )
 
 func ParseFlags() {
-	err := Perform(parseArgs())
+	err := Perform()
 	if err != nil {
 		log.Fatal(err)
 	}
 }
 
-type Arguments map[string]string
-
-func parseArgs() Arguments {
-	operationFlag := flag.String("o", "", "operation")
-	fileNameFlag := flag.String("f", "", "fileName")
-	flag.Parse()
-
-	return Arguments{
-		"o": *operationFlag,
-		"f": *fileNameFlag,
-	}
-}
-
-func Perform(args Arguments) error {
+func Perform() error {
 	up := upload.NewClient(config.ConnFile)
 	down := download.NewClient(config.ConnFile)
 	list := download.NewListServiceClient(config.ConnList)
 
-	operation := args["o"]
+	dl := flag.String("dl", "", "download file")
+	ul := flag.String("ul", "", "upload file")
+	ls := flag.Bool("ls", false, "list files")
+	flag.Parse()
+
+	switch {
+	case *ls:
+		list.GetFileList()
+		return nil
+	case len(*dl) > 0:
+		if _, err := down.Download(*dl); err != nil {
+			return err
+		}
+	case len(*ul) > 0:
+		if _, err := up.Upload(*ul); err != nil {
+			return err
+		}
+	default:
+		return errors.New("operation not allowed")
+	}
+	return nil
+
+}
+
+/*operation := args["o"]
 	if operation == "" {
 		return errors.New("-operation flag has to be specified")
 	}
 
-	fileName := args["f"]
+	ls := args["ls"]
+
+	if len(ls) >= 0 {
+		list.GetFileList()
+		return nil
+	}
+
+	fileName := args["dl"]
 	if (operation == "download" || operation == "upload") && fileName == "" {
 		return errors.New("-fileName flag has to be specified")
 	}
 
 	switch operation {
-	case "upload":
+	case "u":
 		item := args["f"]
 		if item == "" {
 			return errors.New("-file flag has to be specified")
@@ -55,7 +73,7 @@ func Perform(args Arguments) error {
 		}
 		return nil
 
-	case "list":
+	case "ls":
 		list.GetFileList()
 		return nil
 
@@ -72,4 +90,4 @@ func Perform(args Arguments) error {
 	default:
 		return errors.New("operation not allowed")
 	}
-}
+}*/
