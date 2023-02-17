@@ -1,4 +1,4 @@
-package upload
+package fileclient
 
 import (
 	"context"
@@ -6,7 +6,8 @@ import (
 	"google.golang.org/grpc"
 	"google.golang.org/grpc/metadata"
 	"imageclient/config"
-	pb "imageclient/pkg/proto"
+	"imageclient/file"
+	pb2 "imageclient/proto"
 	"io"
 	"log"
 	"os"
@@ -14,13 +15,42 @@ import (
 )
 
 type Client struct {
-	client pb.FileServiceClient
+	client pb2.FileServiceClient
 }
 
-func NewClient(conn grpc.ClientConnInterface) Client {
-	return Client{
-		client: pb.NewFileServiceClient(conn),
+func New(conn grpc.ClientConnInterface) Client {
+	return Client{client: pb2.NewFileServiceClient(conn)}
+}
+
+func (c Client) Download(name string) (pb2.FileService_DownloadClient, error) {
+	ctx, cancel := context.WithDeadline(context.Background(), time.Now().Add(10*time.Second))
+	defer cancel()
+
+	md := metadata.Pairs("filename", name)
+	mdCtx := metadata.NewOutgoingContext(ctx, md)
+
+	downloadClient := New(config.FileServer)
+	downloadStream, err := downloadClient.client.Download(mdCtx, &pb2.DownloadRequest{})
+	if err != nil {
+		return nil, err
 	}
+	f := file.NewFile(name)
+	for {
+		req, err := downloadStream.Recv()
+		if err == io.EOF {
+			if err := os.WriteFile(f.Path, f.Buffer.Bytes(), 0644); err != nil {
+				log.Println(err.Error())
+			}
+			break
+		}
+		if err != nil {
+			log.Println(err.Error())
+			break
+		}
+		f.Buffer.Write(req.GetFragment())
+	}
+	log.Printf("file downloaded: %s", f.Name)
+	return nil, nil
 }
 
 func (c Client) Upload(file string) (string, error) {
@@ -43,7 +73,7 @@ func (c Client) Upload(file string) (string, error) {
 	mdCtx := metadata.NewOutgoingContext(context.Background(), md)
 
 	buffer := make([]byte, 1024)
-	fu := pb.NewFileServiceClient(config.ConnFile)
+	fu := pb2.NewFileServiceClient(config.FileServer)
 	uploadStream, err := fu.Upload(mdCtx)
 
 	for {
@@ -54,7 +84,7 @@ func (c Client) Upload(file string) (string, error) {
 		if err != nil {
 			return "", fmt.Errorf("buffer reading error (%s)", err.Error())
 		}
-		req := &pb.UploadRequest{Fragment: buffer[:n]}
+		req := &pb2.UploadRequest{Fragment: buffer[:n]}
 		if err := uploadStream.Send(req); err != nil {
 			log.Fatal(err.Error())
 		}

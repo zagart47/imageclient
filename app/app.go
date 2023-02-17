@@ -7,8 +7,8 @@ import (
 
 func Start() {
 
-	defer config.ConnFile.Close()
-	defer config.ConnList.Close()
+	defer config.FileServer.Close()
+	defer config.ListServer.Close()
 	parseflags.ParseFlags()
 
 }
