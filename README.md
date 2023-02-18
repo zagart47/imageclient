@@ -22,29 +22,29 @@ Server and client supports 3 actions:
 
 How to upload files:
 ```go
-go run api/client.go -o upload -f {FILEPATH}
+go run cmd/app/main.go -ul {FILEPATH}
 ```
 Where {FILEPATH} is the path to the file relative to the client's root folder.
 
 File upload example:
 ```go
-go run api/client.go -o upload -f files/test.png
+go run cmd/app/main.go -ul files/test.png
 ```
 The "files" folder is located in the root folder of the client.
 
 How to show uploaded files:
 ```go
-go run api/client.go -o list
+go run cmd/app/main.go -ls
 ```
 
 
 How to download uploaded file:
 ```go
-go run api/client.go -o download -f {FILENAME}
+go run cmd/app/main.go -dl {FILENAME}
 ```
-Where {FILENAME} is the filename you chose from the table after ```go run client.go -o list```.
+Where {FILENAME} is the filename you chose from the table after ```go run cmd/app/main.go -ls```.
 
 File download example:
 ```go
-go run api/client.go -o download -f test.png
+go run cmd/app/main.go -dl test.png
 ```
