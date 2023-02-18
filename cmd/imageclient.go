@@ -1,7 +1,7 @@
 package main
 
 import (
-	"imageclient/app"
+	"imageclient/internal/app"
 )
 
 func main() {
