@@ -7,7 +7,7 @@ import (
 	"log"
 )
 
-func Start() {
+func Run() {
 	defer func(FileServer *grpc.ClientConn) {
 		if err := FileServer.Close(); err != nil {
 			log.Fatal(err)
