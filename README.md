@@ -1,6 +1,6 @@
-# Test Task.
+# Image Client.
 
-Test task.
+The client is written to work with the [server](https://github.com/zagart47/imageserver) as part of a test job for the company.
 
 ## Installation
 
